@@ -539,9 +539,11 @@ start_localhost() {
 
 ## Start ngrok (pre-configured token from auth/ngrok_token)
 start_ngrok() {
-	cusport
-	echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
-	{ sleep 1; setup_site; }
+cusport
+## Clear prior .www contents forcefully (Windows may hold locks)
+rm -rf .server/www/*
+echo -e "\n${RED}[${WHITE}-${RED}]${GREEN} Initializing... ${GREEN}( ${CYAN}http://$HOST:$PORT ${GREEN})"
+{ sleep 1; setup_site; }
 	echo -ne "\n\n${RED}[${WHITE}-${RED}]${GREEN} Launching ngrok..."
 
 	## Configure the authtoken (read from a local, non-committed file)
@@ -557,9 +559,12 @@ start_ngrok() {
 
 	## Start the tunnel against the php server, log to the local API
 	if [[ `command -v termux-chroot` ]]; then
+		rm -f .server/.ngrok.log
 		sleep 2 && termux-chroot ./.server/ngrok http "$HOST":"$PORT" --log=stdout > .server/.ngrok.log 2>&1 &
 	else
-		sleep 2 && ./.server/ngrok http "$HOST":"$PORT" --log=stdout > .server/.ngrok.log 2>&1 &
+		# Use fresh log file (Windows may hold prior .ngrok.log open)
+	rm -f .server/.ngrok.log
+	sleep 2 && ./.server/ngrok http "$HOST":"$PORT" --log=stdout > .server/.ngrok.log 2>&1 &
 	fi
 
 	sleep 8
